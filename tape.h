@@ -20,6 +20,7 @@ private:
   int *data;                 // Tape data
   int length;                // Length of the tape
   int pos;                   // Current position of tape
+  bool readFlag;             // Shows if we have read the data
 
   int maxElements;           // Maximum elements we can keep in RAM
   int boundMin;              // Left bound of the visible tape
@@ -30,12 +31,13 @@ private:
 
   std::ifstream tape;        // File with the data of the tape
 
+  friend class TapeSorter;
 public:
 
   /* Constructor that read the tape (we have a file) */
   Tape( const std::string &fileName, const std::string &configFileName );
 
-  /* Copy constructor don't need??? */
+  /* Copy constructor - don't need */
   Tape( const Tape &other ) = delete;
   Tape & operator =( const Tape &other ) = delete;
 
@@ -44,7 +46,8 @@ public:
   Tape & operator =( Tape &&other ) noexcept;
 
   /* Methods for read & write data */
-  int read( void ) const;
+  int read( void );
+  bool readMove( int &ref );
   void write( int value );
 
   /* Methods for move the tape */
@@ -57,6 +60,9 @@ public:
   Tape & operator --( void );
   bool isEnd( void ) const;
   bool isBegin( void ) const;
+
+  /* Clear methods */
+  void clear( void );
 
   ~Tape( void );
 };

@@ -18,12 +18,18 @@
     <ClInclude Include="tape.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="tape_sorter.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tape.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="tape_sorter.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

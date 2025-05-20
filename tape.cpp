@@ -5,7 +5,7 @@
 Tape::Tape( Tape &&other ) noexcept :
   data(other.data), length(other.length), pos(other.pos), maxElements(other.maxElements),
   tape(std::move(other.tape)), config(other.config),
-  boundMin(other.boundMin), boundMax(other.boundMax), firstElement(other.firstElement)
+  boundMin(other.boundMin), boundMax(other.boundMax), firstElement(other.firstElement), readFlag(other.readFlag)
 {
   other.data = nullptr;
 }
@@ -23,6 +23,7 @@ Tape & Tape::operator =( Tape &&other ) noexcept
     boundMin = other.boundMin;
     boundMax = other.boundMax;
     firstElement = other.firstElement;
+    readFlag = other.readFlag;
 
     other.data = nullptr;
   }
@@ -31,7 +32,7 @@ Tape & Tape::operator =( Tape &&other ) noexcept
 }
 
 Tape::Tape( const std::string &fileName, const std::string &configFileName ) : 
-  pos(0), tape(fileName, std::ifstream::binary)
+  pos(0), tape(fileName, std::ifstream::binary), readFlag(false)
 {
   std::ifstream configFile(configFileName);
 
@@ -72,14 +73,42 @@ Tape::Tape( const std::string &fileName, const std::string &configFileName ) :
   firstElement = 0;
 }
 
-int Tape::read( void ) const
+/*
+ * Indices in read & write methods explanation:
+ *   - pos is in range [0..N], so (pos - boundMin) is in range [0..M]
+ *   - firstElement shows, which of the [0..M] elements of data is in the left of the others, so we add it
+ *   - after all, index can be more than size of data, so we emulate cyclic shift and take %
+ */
+
+int Tape::read( void )
 {
   int index = (firstElement + pos - boundMin) % maxElements;
 
   // Config delay
   std::this_thread::sleep_for(std::chrono::milliseconds(config.readWrite));
+  readFlag = true;
 
   return data[index];
+}
+
+bool Tape::readMove( int &ref )
+{
+  int index = (firstElement + pos - boundMin) % maxElements;
+
+  if (isEnd())
+    return false;
+
+  // Config delay
+  std::this_thread::sleep_for(std::chrono::milliseconds(config.readWrite));
+
+  readFlag = true;
+
+  if (pos < length - 1)
+    moveForward();
+
+  ref = data[index];
+
+  return true;
 }
 
 void Tape::write( int value )
@@ -98,6 +127,7 @@ void Tape::moveBackward( void )
     throw std::invalid_argument("Illegal backward move!");
 
   pos--;
+  readFlag = false;
 
   if (pos < boundMin)
   {
@@ -123,12 +153,14 @@ Tape & Tape::operator--( void )
 void Tape::moveForward( void )
 {
   if (pos + 1 >= length)
-    throw std::invalid_argument("Illegal forward move!");
+    return;
 
   pos++;
+  readFlag = false;
 
   if (pos > boundMax)
   {
+    // Data paging from the end
     tape.read((char *)&data[firstElement], sizeof(int));
 
     if (tape.eof())
@@ -151,12 +183,12 @@ Tape & Tape::operator++( void )
 
 bool Tape::isBegin( void ) const
 {
-  return pos == 0;
+  return pos == 0 && readFlag;
 }
 
 bool Tape::isEnd( void ) const
 {
-  return pos == length - 1;
+  return pos == length - 1 && readFlag;
 }
 
 void Tape::rewind( void )
@@ -174,6 +206,13 @@ void Tape::rewind( void )
 
   // Config delay
   std::this_thread::sleep_for(std::chrono::milliseconds(config.rewind));
+}
+
+void Tape::clear( void )
+{
+  if (data != nullptr)
+    delete data, data = nullptr;
+  tape.close();
 }
 
 Tape::~Tape( void )
