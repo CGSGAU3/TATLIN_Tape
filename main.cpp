@@ -49,7 +49,10 @@ int main( int argC, char *argV[] )
       res.clear();
 
       for (const auto &entry : std::filesystem::directory_iterator("tmp"))
-        std::remove(entry.path().string().c_str());
+      {
+        if (entry.path().string() != "tmp\\.gitkeep")
+          std::remove(entry.path().string().c_str());
+      }
 
       return EXIT_SUCCESS;
     }

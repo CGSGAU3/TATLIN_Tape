@@ -113,7 +113,10 @@ std::string TapeSorter::merge( void )
   std::vector<std::string> tapes;
 
   for (const auto &entry : std::filesystem::directory_iterator("tmp"))
-    tapes.push_back(entry.path().string());
+  {
+    if (entry.path().string() != "tmp\\.gitkeep")
+      tapes.push_back(entry.path().string());
+  }
 
   int iter = 0;
 
@@ -145,7 +148,10 @@ Tape TapeSorter::sort( void )
   Tape res = Tape(merge(), "config.ini");
 
   for (const auto &entry : std::filesystem::directory_iterator("tmp"))
-    std::remove(entry.path().string().c_str());
+  {
+    if (entry.path().string() != "tmp\\.gitkeep")
+      std::remove(entry.path().string().c_str());
+  }
 
   return res;
 }
